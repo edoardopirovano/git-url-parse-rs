@@ -177,7 +177,6 @@ impl GitUrl {
 
         // Parse through path for name,owner,organization
         // Support organizations for Azure Devops
-        debug!("The urlpath: {:?}", &urlpath);
 
         // Most git services use the path for metadata in the same way, so we're going to separate
         // the metadata
@@ -187,7 +186,6 @@ impl GitUrl {
         //
         // organizations are going to be supported on a per-host basis
         let splitpath = &urlpath.rsplit_terminator('/').collect::<Vec<&str>>();
-        debug!("rsplit results for metadata: {:?}", splitpath);
 
         let name = splitpath[0].trim_end_matches(".git").to_string();
 
@@ -207,7 +205,6 @@ impl GitUrl {
 
                 match hosts_w_organization_in_path.contains(&host_str) {
                     true => {
-                        debug!("Found a git provider with an org");
 
                         // The path differs between git:// and https:// schemes
 
@@ -318,11 +315,9 @@ fn normalize_ssh_url(url: &str) -> Result<Url> {
 
     match u.len() {
         2 => {
-            debug!("Normalizing ssh url: {:?}", u);
             normalize_url(&format!("ssh://{}/{}", u[0], u[1]))
         }
         3 => {
-            debug!("Normalizing ssh url with ports: {:?}", u);
             normalize_url(&format!("ssh://{}:{}/{}", u[0], u[1], u[2]))
         }
         _default => Err(eyre!("SSH normalization pattern not covered for: {:?}", u)),
@@ -352,7 +347,6 @@ fn normalize_file_path(_filepath: &str) -> Result<Url> {
 /// `ssh://` or `file://` urls that require more information to be added so that
 /// they can be parsed more effectively by `url::Url::parse()`
 pub fn normalize_url(url: &str) -> Result<Url> {
-    debug!("Processing: {:?}", &url);
 
     // Error if there are null bytes within the url
     // https://github.com/tjtelan/git-url-parse-rs/issues/16
@@ -381,7 +375,6 @@ pub fn normalize_url(url: &str) -> Result<Url> {
                 Ok(_p) => u,
                 Err(_e) => {
                     // Catch case when an ssh url is given w/o a user
-                    debug!("Scheme parse fail. Assuming a userless ssh url");
                     normalize_ssh_url(trim_url).with_context(|| {
                         "No url scheme was found, then failed to normalize as ssh url.".to_string()
                     })?
@@ -399,12 +392,10 @@ pub fn normalize_url(url: &str) -> Result<Url> {
 
             match re.is_match(trim_url) {
                 true => {
-                    debug!("Scheme::SSH match for normalization");
                     normalize_ssh_url(trim_url)
                         .with_context(|| "Failed to normalize as ssh url".to_string())?
                 }
                 false => {
-                    debug!("Scheme::File match for normalization");
                     normalize_file_path(trim_url)
                         .with_context(|| "Failed to normalize as file url".to_string())?
                 }
